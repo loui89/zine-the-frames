@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -45,8 +45,25 @@
     -webkit-font-smoothing: antialiased;
   }
   html.embed, html.embed body { background: transparent; }
-  html.embed[data-ink="light"] { --ink: #ededea; --muted: #a3a39e; --line: rgba(237,237,234,.3); }
-  html.embed[data-ink="dark"] { --ink: #161616; --muted: #74746f; --line: rgba(22,22,22,.28); }
+  /* dentro de Squarespace no seguimos el modo oscuro del celular: el fondo es el de tu sección */
+  html.embed:not([data-ink="light"]) { --ink: #161616; --muted: #74746f; --line: rgba(22,22,22,.3); --ground: rgba(0,0,0,.32); }
+  html.embed[data-ink="light"] { --ink: #ededea; --muted: #a3a39e; --line: rgba(237,237,234,.35); --ground: rgba(0,0,0,.7); }
+
+  /* pantalla completa: fondo oscuro inmersivo */
+  html.is-full, html.is-full body {
+    --stage: #141414; --ink: #ededea; --muted: #9a9a95; --line: rgba(237,237,234,.35); --ground: rgba(0,0,0,.8);
+    background: var(--stage) !important;
+    height: 100%;
+    overflow: hidden;
+  }
+  html.is-full .viewer {
+    max-width: none;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 12px 12px 10px;
+  }
 
   .viewer {
     width: 100%;
@@ -56,7 +73,8 @@
   }
   html.embed .viewer { padding: 12px 8px 8px; }
   html.embed .stage { max-width: var(--embed-max, 960px); }
-  @media (max-width: 640px) { .stage { max-width: calc((100svh - 150px) * 148 / 210); } html.embed .stage { max-width: none; } }
+  /* en pantalla completa el libro usa todo el alto disponible */
+  html.is-full .stage { max-width: min(100%, calc((100dvh - 96px) * 296 / 210)); }
 
   .stage {
     position: relative;
@@ -69,7 +87,6 @@
   }
   /* reserva el espacio mientras cargan las imágenes */
   .stage.is-loading { aspect-ratio: 296 / 210; }
-  @media (max-width: 640px) { .stage.is-loading { aspect-ratio: 148 / 210; } }
 
   .book {
     width: 100%;
@@ -123,7 +140,7 @@
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
   }
   .nav svg { width: 18px; height: 18px; }
-  .nav:hover:not(:disabled) { background: var(--red); border-color: var(--red); color: var(--on-red); }
+  @media (hover: hover) { .nav:hover:not(:disabled) { background: var(--red); border-color: var(--red); color: var(--on-red); } }
   .nav:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
   .nav:disabled { opacity: 0.28; cursor: default; }
 
@@ -138,6 +155,23 @@
   }
   .counter .total { color: var(--muted); }
 
+  .full-btn { margin-left: clamp(4px, 2vw, 16px); }
+  .full-btn .i-close { display: none; }
+  html.is-full .full-btn .i-open { display: none; }
+  html.is-full .full-btn .i-close { display: block; }
+
+  .rotate-hint {
+    display: none;
+    margin: 14px 0 0;
+    text-align: center;
+    font-size: 15px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+  @media (orientation: portrait) and (max-width: 700px) {
+    html.is-full .rotate-hint { display: block; }
+  }
+
   .sr-only {
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
     overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
@@ -146,9 +180,9 @@
 </head>
 <body>
 <main class="viewer">
-  <h1 class="sr-only">The Frames Vol. 1, a photo zine by loui.61</h1>
+  <h1 class="sr-only">The Frames Vol. 1, zine fotográfica de loui.61</h1>
   <div class="stage is-loading" id="stage">
-    <div class="book" id="book" aria-label="Zine pages">
+    <div class="book" id="book" aria-label="Páginas de la zine">
       <div class="page" data-density="soft"><img src="pages/01.jpg" alt="Page 1" width="1000" height="1419"></div>
       <div class="page" data-density="soft"><img src="pages/02.jpg" alt="Page 2" width="1000" height="1419"></div>
       <div class="page" data-density="soft"><img src="pages/03.jpg" alt="Page 3" width="1000" height="1419"></div>
@@ -175,15 +209,20 @@
       <div class="page" data-density="soft"><img src="pages/24.jpg" alt="Page 24" width="1000" height="1419"></div>
     </div>
   </div>
-  <nav class="controls" aria-label="Zine navigation">
-    <button class="nav" id="prev" type="button" aria-label="Previous page" disabled>
+  <nav class="controls" aria-label="Navegación de la zine">
+    <button class="nav" id="prev" type="button" aria-label="Página anterior" disabled>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
     <div class="counter" id="counter" aria-live="polite"><span id="current">1</span> <span class="total">/ <span id="total">24</span></span></div>
-    <button class="nav" id="next" type="button" aria-label="Next page" disabled>
+    <button class="nav" id="next" type="button" aria-label="Página siguiente" disabled>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
     </button>
+    <button class="nav full-btn" id="full" type="button" aria-label="Pantalla completa">
+      <svg class="i-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      <svg class="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
   </nav>
+  <p class="rotate-hint">Gira tu teléfono para verla más grande</p>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
@@ -227,12 +266,12 @@
       width: 500,
       height: 710,
       size: "stretch",
-      minWidth: 240,
+      minWidth: 90,
       maxWidth: 600,
-      minHeight: 341,
+      minHeight: 128,
       maxHeight: 852,
       showCover: true,
-      usePortrait: true,
+      usePortrait: false,
       drawShadow: true,
       maxShadowOpacity: 0.45,
       flippingTime: reduceMotion ? 250 : 850,
@@ -244,7 +283,7 @@
 
     function update() {
       var i = flip.getCurrentPageIndex();
-      var portrait = flip.getOrientation() === "portrait";
+      var portrait = false;
       var label;
       if (portrait || i === 0 || i === total - 1) {
         label = String(i + 1);
@@ -272,6 +311,57 @@
     document.addEventListener("keydown", function (e) {
       if (e.key === "ArrowLeft") { flip.flipPrev(); }
       if (e.key === "ArrowRight") { flip.flipNext(); }
+    });
+
+    // ---- Pantalla completa ----
+    var fullBtn = document.getElementById("full");
+    var inFrame = window.parent !== window;
+    var canNative = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+    var standaloneUrl = location.origin + location.pathname + "?full=1";
+
+    function fsElement() { return document.fullscreenElement || document.webkitFullscreenElement; }
+    function setFull(on) {
+      root.classList.toggle("is-full", on);
+      fullBtn.setAttribute("aria-label", on ? "Salir de pantalla completa" : "Pantalla completa");
+      setTimeout(function () { window.dispatchEvent(new Event("resize")); update(); }, 60);
+    }
+    function onFsChange() {
+      var on = !!fsElement();
+      setFull(on);
+      if (on && screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock("landscape").catch(function () {});
+      }
+    }
+    document.addEventListener("fullscreenchange", onFsChange);
+    document.addEventListener("webkitfullscreenchange", onFsChange);
+
+    // Abierto desde el iPhone en pestaña nueva: ya ocupa toda la pantalla
+    var openedAsFull = params.get("full") === "1";
+    if (openedAsFull) setFull(true);
+
+    fullBtn.addEventListener("click", function () {
+      if (fsElement()) {
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        return;
+      }
+      if (openedAsFull) {
+        window.close();
+        setTimeout(function () { history.length > 1 ? history.back() : setFull(false); }, 150);
+        return;
+      }
+      var el = document.documentElement;
+      var req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (canNative && req) {
+        try {
+          var p = req.call(el);
+          if (p && p.catch) p.catch(function () { window.open(standaloneUrl, "_blank"); });
+        } catch (err) { window.open(standaloneUrl, "_blank"); }
+      } else if (inFrame) {
+        // iPhone: Safari no permite pantalla completa en páginas, se abre la zine sola a pantalla entera
+        window.open(standaloneUrl, "_blank");
+      } else {
+        setFull(!root.classList.contains("is-full"));
+      }
     });
 
     stage.classList.remove("is-loading");

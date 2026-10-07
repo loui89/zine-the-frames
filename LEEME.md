@@ -17,6 +17,7 @@ Edita la página, agrega un bloque "Código", pega esto y guarda:
   <iframe src="https://loui89.github.io/zine-the-frames/?embed=1"
           title="The Frames Vol. 1, photo zine by loui.61"
           loading="lazy"
+          allow="fullscreen" allowfullscreen
           style="width:100%;border:0;display:block;height:70vw;max-height:880px;background:transparent"></iframe>
 </div>
 <script>
@@ -35,8 +36,8 @@ de los bloques de código mientras estás conectado.
 
 ## Opciones de la URL del iframe
 - `?embed=1`            fondo transparente (toma el color de tu sección)
-- `&ink=light`          botones y contador claros, para secciones oscuras
-- `&ink=dark`           botones y contador oscuros, para secciones claras
+- `&ink=light`          botones y contador claros, solo si tu sección es oscura
+                        (sin este parámetro los controles son oscuros, para secciones claras)
 - `&maxw=800`           ancho máximo del libro en px (por defecto 960)
 Ejemplo: https://loui89.github.io/zine-the-frames/?embed=1&ink=light&maxw=900
 
