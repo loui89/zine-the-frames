@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Frames Vol. 1 | loui.61</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --stage: #dededb;
+    --ink: #161616;
+    --muted: #74746f;
+    --line: rgba(22, 22, 22, 0.28);
+    --red: #e01e26;
+    --on-red: #ffffff;
+    --ground: rgba(0, 0, 0, 0.32);
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --stage: #1b1b1c;
+      --ink: #ededea;
+      --muted: #94948f;
+      --line: rgba(237, 237, 234, 0.3);
+      --ground: rgba(0, 0, 0, 0.7);
+    }
+  }
+  :root[data-theme="dark"] {
+    --stage: #1b1b1c;
+    --ink: #ededea;
+    --muted: #94948f;
+    --line: rgba(237, 237, 234, 0.3);
+    --ground: rgba(0, 0, 0, 0.7);
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html, body { margin: 0; }
+  body {
+    background: var(--stage);
+    color: var(--ink);
+    font-family: "Bebas Neue", "Oswald", "Arial Narrow", Impact, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  html.embed, html.embed body { background: transparent; }
+  html.embed[data-ink="light"] { --ink: #ededea; --muted: #a3a39e; --line: rgba(237,237,234,.3); }
+  html.embed[data-ink="dark"] { --ink: #161616; --muted: #74746f; --line: rgba(22,22,22,.28); }
+
+  .viewer {
+    width: 100%;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: clamp(16px, 4vw, 48px) clamp(12px, 3vw, 32px) clamp(14px, 3vw, 28px);
+  }
+  html.embed .viewer { padding: 12px 8px 8px; }
+  html.embed .stage { max-width: var(--embed-max, 960px); }
+  @media (max-width: 640px) { .stage { max-width: calc((100svh - 150px) * 148 / 210); } html.embed .stage { max-width: none; } }
+
+  .stage {
+    position: relative;
+    width: 100%;
+    /* que libro + botones quepan en pantalla */
+    max-width: calc((100svh - 150px) * 296 / 210);
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+  }
+  /* reserva el espacio mientras cargan las imágenes */
+  .stage.is-loading { aspect-ratio: 296 / 210; }
+  @media (max-width: 640px) { .stage.is-loading { aspect-ratio: 148 / 210; } }
+
+  .book {
+    width: 100%;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  .book.is-ready { opacity: 1; }
+  /* sombra de apoyo bajo el libro */
+  .stage::after {
+    content: "";
+    position: absolute;
+    left: var(--ground-x, 50%);
+    bottom: -14px;
+    width: var(--ground-w, 70%);
+    height: 26px;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, var(--ground) 0%, transparent 70%);
+    filter: blur(6px);
+    pointer-events: none;
+    z-index: -1;
+    transition: width 0.6s ease;
+  }
+  .page { background: #fff; overflow: hidden; }
+  .page img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+  }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(18px, 4vw, 36px);
+    margin-top: clamp(22px, 3.5vw, 34px);
+  }
+  .nav {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+  }
+  .nav svg { width: 18px; height: 18px; }
+  .nav:hover:not(:disabled) { background: var(--red); border-color: var(--red); color: var(--on-red); }
+  .nav:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+  .nav:disabled { opacity: 0.28; cursor: default; }
+
+  .counter {
+    min-width: 6.5ch;
+    text-align: center;
+    font-size: 22px;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .counter .total { color: var(--muted); }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+</style>
+</head>
+<body>
+<main class="viewer">
+  <h1 class="sr-only">The Frames Vol. 1, a photo zine by loui.61</h1>
+  <div class="stage is-loading" id="stage">
+    <div class="book" id="book" aria-label="Zine pages">
+      <div class="page" data-density="soft"><img src="pages/01.jpg" alt="Page 1" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/02.jpg" alt="Page 2" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/03.jpg" alt="Page 3" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/04.jpg" alt="Page 4" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/05.jpg" alt="Page 5" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/06.jpg" alt="Page 6" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/07.jpg" alt="Page 7" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/08.jpg" alt="Page 8" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/09.jpg" alt="Page 9" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/10.jpg" alt="Page 10" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/11.jpg" alt="Page 11" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/12.jpg" alt="Page 12" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/13.jpg" alt="Page 13" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/14.jpg" alt="Page 14" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/15.jpg" alt="Page 15" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/16.jpg" alt="Page 16" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/17.jpg" alt="Page 17" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/18.jpg" alt="Page 18" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/19.jpg" alt="Page 19" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/20.jpg" alt="Page 20" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/21.jpg" alt="Page 21" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/22.jpg" alt="Page 22" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/23.jpg" alt="Page 23" width="1000" height="1419"></div>
+      <div class="page" data-density="soft"><img src="pages/24.jpg" alt="Page 24" width="1000" height="1419"></div>
+    </div>
+  </div>
+  <nav class="controls" aria-label="Zine navigation">
+    <button class="nav" id="prev" type="button" aria-label="Previous page" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="counter" id="counter" aria-live="polite"><span id="current">1</span> <span class="total">/ <span id="total">24</span></span></div>
+    <button class="nav" id="next" type="button" aria-label="Next page" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+    </button>
+  </nav>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var root = document.documentElement;
+  if (params.has("embed")) {
+    root.classList.add("embed");
+    if (params.get("ink")) root.setAttribute("data-ink", params.get("ink"));
+    if (params.get("maxw")) root.style.setProperty("--embed-max", parseInt(params.get("maxw"), 10) + "px");
+  }
+  if (params.get("theme")) root.setAttribute("data-theme", params.get("theme"));
+
+  var bookEl = document.getElementById("book");
+  var stage = document.getElementById("stage");
+  var prevBtn = document.getElementById("prev");
+  var nextBtn = document.getElementById("next");
+  var currentEl = document.getElementById("current");
+  var imgs = Array.prototype.slice.call(bookEl.querySelectorAll("img"));
+  var total = imgs.length;
+  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Avisa a la página que contiene el iframe cuál es la altura real
+  function postHeight() {
+    if (window.parent === window) return;
+    var h = Math.ceil(document.documentElement.getBoundingClientRect().height);
+    window.parent.postMessage({ type: "loui-zine-height", height: h }, "*");
+  }
+
+  function whenLoaded(img) {
+    return new Promise(function (res) {
+      if (img.complete && img.naturalWidth) return res();
+      img.addEventListener("load", res, { once: true });
+      img.addEventListener("error", res, { once: true });
+    });
+  }
+
+  Promise.all(imgs.map(whenLoaded)).then(function () {
+    var flip = new St.PageFlip(bookEl, {
+      width: 500,
+      height: 710,
+      size: "stretch",
+      minWidth: 240,
+      maxWidth: 600,
+      minHeight: 341,
+      maxHeight: 852,
+      showCover: true,
+      usePortrait: true,
+      drawShadow: true,
+      maxShadowOpacity: 0.45,
+      flippingTime: reduceMotion ? 250 : 850,
+      mobileScrollSupport: true,
+      swipeDistance: 30,
+      showPageCorners: true
+    });
+    flip.loadFromHTML(bookEl.querySelectorAll(".page"));
+
+    function update() {
+      var i = flip.getCurrentPageIndex();
+      var portrait = flip.getOrientation() === "portrait";
+      var label;
+      if (portrait || i === 0 || i === total - 1) {
+        label = String(i + 1);
+      } else {
+        var left = i % 2 === 1 ? i : i - 1;
+        label = (left + 1) + "-" + (left + 2);
+      }
+      currentEl.textContent = label;
+      prevBtn.disabled = i === 0;
+      var atEnd = i === total - 1 || (!portrait && i >= total - 2 && total % 2 === 0 && i === total - 1);
+      nextBtn.disabled = atEnd;
+      // la sombra de apoyo se ajusta al ancho visible
+      var single = portrait || i === 0 || i === total - 1;
+      stage.style.setProperty("--ground-w", single ? (portrait ? "80%" : "40%") : "80%");
+      stage.style.setProperty("--ground-x", (!portrait && i === 0) ? "75%" : (!portrait && i === total - 1) ? "25%" : "50%");
+      postHeight();
+    }
+
+    flip.on("flip", update);
+    flip.on("changeOrientation", update);
+    flip.on("init", update);
+
+    prevBtn.addEventListener("click", function () { flip.flipPrev(); });
+    nextBtn.addEventListener("click", function () { flip.flipNext(); });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft") { flip.flipPrev(); }
+      if (e.key === "ArrowRight") { flip.flipNext(); }
+    });
+
+    stage.classList.remove("is-loading");
+    bookEl.classList.add("is-ready");
+    update();
+    setTimeout(postHeight, 300);
+  });
+
+  window.addEventListener("resize", function () { setTimeout(postHeight, 150); });
+  window.addEventListener("load", postHeight);
+})();
+</script>
+</body>
+</html>
